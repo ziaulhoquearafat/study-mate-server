@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,9 +19,29 @@ const client = new MongoClient(uri, {
   },
 });
 
+app.get("/", (req, res) => {
+  res.send("Study Mate Server Is Running");
+});
+
 async function run() {
   try {
     await client.connect();
+
+    const db = client.db("partner-db");
+    const partnerCollection = db.collection("partner");
+
+    app.get("/partner", async (req, res) => {
+      const result = await partnerCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.get("/partner/:id", async (req, res) => {
+      const id = req.params.id;
+      // console.log(id);
+      const result = await partnerCollection.findOne({ _id: new ObjectId(id) });
+      res.send({ success: true, result });
+    });
+
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
@@ -31,10 +51,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
-
-app.get("/", (req, res) => {
-  res.send("Study Mate Server Is Running");
-});
 
 app.listen(port, () => {
   console.log(`Study Mate Server Is Running On Port: ${port}`);
