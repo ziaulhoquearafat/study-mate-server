@@ -29,6 +29,7 @@ async function run() {
 
     const db = client.db("partner-db");
     const partnerCollection = db.collection("partner");
+    const partnerRequestCollection = db.collection("partner-req");
 
     // GET
     app.get("/partner", async (req, res) => {
@@ -49,6 +50,20 @@ async function run() {
       console.log(data);
       const result = await partnerCollection.insertOne(data);
       res.send(result);
+    });
+
+    app.post("/partner-request/:id", async (req, res) => {
+      const data = req.body;
+      const id = req.params.id;
+      const result = await partnerRequestCollection.insertOne(data);
+      const filter = { _id: new ObjectId(id) };
+      const update = {
+        $inc: {
+          partnerCount: 1,
+        },
+      };
+      const partnerCounted = await partnerCollection.updateOne(filter, update);
+      res.send(result, partnerCounted);
     });
 
     await client.db("admin").command({ ping: 1 });
