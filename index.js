@@ -30,6 +30,7 @@ async function run() {
     const db = client.db("partner-db");
     const partnerCollection = db.collection("partner");
 
+    // GET
     app.get("/partner", async (req, res) => {
       const result = await partnerCollection.find().toArray();
       res.send(result);
@@ -40,6 +41,14 @@ async function run() {
       // console.log(id);
       const result = await partnerCollection.findOne({ _id: new ObjectId(id) });
       res.send({ success: true, result });
+    });
+
+    // POST
+    app.post("/partner", async (req, res) => {
+      const data = req.body;
+      console.log(data);
+      const result = await partnerCollection.insertOne(data);
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
