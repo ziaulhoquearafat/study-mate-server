@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const admin = require("firebase-admin");
+const serviceAccount = require("./study-mate-firebase-adminsdk.json");
 const {
   MongoClient,
   ServerApiVersion,
@@ -13,6 +15,10 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
 const uri =
   "mongodb+srv://study_mate_db:YOawYATN9iOngn1P@cluster0.6prdapd.mongodb.net/?appName=Cluster0";
 
@@ -23,6 +29,26 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+const verifyToken = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({
+      message: "unauthorized access. Token Not Found",
+    });
+  }
+  const token = authorization.split(" ")[1];
+  console.log(token);
+  try {
+    const decode = await admin.auth().verifyIdToken(token);
+    console.log(decode);
+    next();
+  } catch (error) {
+    res.status(401).send({
+      message: "unauthorized access",
+    });
+  }
+};
 
 app.get("/", (req, res) => {
   res.send("Study Mate Server Is Running");
@@ -71,7 +97,7 @@ async function run() {
       res.send(result, partnerCounted);
     });
 
-    app.get("/partner-request", async (req, res) => {
+    app.get("/partner-request", verifyToken, async (req, res) => {
       const email = req.query.userEmail;
       const result = await partnerRequestCollection
         .find({ requestEmail: email })
@@ -79,7 +105,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/partner-request/:id", async (req, res) => {
+    app.delete("/partner-request/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       console.log(id);
       const result = await partnerRequestCollection.deleteOne({
