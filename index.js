@@ -79,11 +79,24 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("partner-request/:id", async (req, res) => {
+    app.delete("/partner-request/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const result = await partnerRequestCollection.deleteOne({
         _id: new ObjectId(id),
       });
+      res.send(result);
+    });
+
+    app.put("/partner-request/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      console.log("updating", data);
+      const filter = { _id: new ObjectId(id) };
+      const update = {
+        $set: data,
+      };
+      const result = await partnerRequestCollection.updateOne(filter, update);
       res.send(result);
     });
 
