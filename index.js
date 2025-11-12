@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const {
+  MongoClient,
+  ServerApiVersion,
+  ObjectId,
+  CURSOR_FLAGS,
+} = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -64,6 +69,14 @@ async function run() {
       };
       const partnerCounted = await partnerCollection.updateOne(filter, update);
       res.send(result, partnerCounted);
+    });
+
+    app.get("/partner-request", async (req, res) => {
+      const email = req.query.userEmail;
+      const result = await partnerRequestCollection
+        .find({ requestEmail: email })
+        .toArray();
+      res.send(result);
     });
 
     await client.db("admin").command({ ping: 1 });
