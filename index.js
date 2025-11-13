@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const admin = require("firebase-admin");
+require("dotenv").config();
 const serviceAccount = require("./study-mate-firebase-adminsdk.json");
 const {
   MongoClient,
@@ -19,8 +20,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-const uri =
-  "mongodb+srv://study_mate_db:YOawYATN9iOngn1P@cluster0.6prdapd.mongodb.net/?appName=Cluster0";
+const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.6prdapd.mongodb.net/?appName=Cluster0`;
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -38,10 +38,10 @@ const verifyToken = async (req, res, next) => {
     });
   }
   const token = authorization.split(" ")[1];
-  console.log(token);
+  // console.log(token);
   try {
     const decode = await admin.auth().verifyIdToken(token);
-    console.log(decode);
+    // console.log(decode);
     next();
   } catch (error) {
     res.status(401).send({
@@ -85,14 +85,14 @@ async function run() {
     });
 
     // POST
-    app.post("/partner", async (req, res) => {
+    app.post("/partner", verifyToken, async (req, res) => {
       const data = req.body;
-      console.log(data);
+      // console.log(data);
       const result = await partnerCollection.insertOne(data);
       res.send(result);
     });
 
-    app.post("/partner-request/:id", async (req, res) => {
+    app.post("/partner-request/:id", verifyToken, async (req, res) => {
       const data = req.body;
       const id = req.params.id;
       const result = await partnerRequestCollection.insertOne(data);
@@ -123,10 +123,10 @@ async function run() {
       res.send(result);
     });
 
-    app.put("/partner-request/:id", async (req, res) => {
+    app.put("/partner-request/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-      console.log("updating", data);
+      // console.log("updating", data);
       const filter = { _id: new ObjectId(id) };
       const update = {
         $set: data,
