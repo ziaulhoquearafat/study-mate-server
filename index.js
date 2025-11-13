@@ -68,11 +68,20 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/partner/:id", async (req, res) => {
+    app.get("/partner/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       // console.log(id);
       const result = await partnerCollection.findOne({ _id: new ObjectId(id) });
       res.send({ success: true, result });
+    });
+
+    app.get("/partners/top-rated", async (req, res) => {
+      const result = await partnerCollection
+        .find()
+        .sort({ rating: -1 })
+        .limit(3)
+        .toArray();
+      res.send(result);
     });
 
     // POST
@@ -123,6 +132,25 @@ async function run() {
         $set: data,
       };
       const result = await partnerRequestCollection.updateOne(filter, update);
+      res.send(result);
+    });
+
+    app.get("/search", async (req, res) => {
+      const search_text = req.query.search || "";
+      const sortOrder = req.query.sort || "";
+
+      const query = {
+        subject: { $regex: search_text, $options: "i" },
+      };
+
+      let cursor = partnerCollection.find(query);
+      if (sortOrder === "asc") {
+        cursor = cursor.sort({ experienceLevel: -1 });
+      } else if (sortOrder === "desc") {
+        cursor = cursor.sort({ experienceLevel: 1 });
+      }
+
+      const result = await cursor.toArray();
       res.send(result);
     });
 
